@@ -20,7 +20,7 @@ WriteMakefile(
         'Crypt::CBC'      => 0,
         'String::CRC32'   => 0,
         'Crypt::Rijndael' => 0,
-        'Dancer'          => 1.130,
+        'Dancer'          => 1.176, # session_name
     },
     dist                => { COMPRESS => 'gzip -9f', SUFFIX => 'gz', },
     clean               => { FILES => 'Dancer-Session-Cookie-* t/logs' },

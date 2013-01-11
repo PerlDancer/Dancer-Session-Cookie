@@ -26,9 +26,8 @@ note "honors session_name setting"; {
     my $session_name = "stuff.session";
     set session_name => $session_name;
     is $session->session_name, $session_name;
-
-    $session->flush;
-    is cookies->{$session_name}->name, $session_name;
+    my %cookie = $session->_cookie_params;
+    is $cookie{name}, $session_name;
 }
 
 done_testing;

@@ -8,8 +8,7 @@ use Crypt::CBC;
 use String::CRC32;
 use Crypt::Rijndael;
 
-use Dancer ();
-use Dancer::Config 'setting';
+use Dancer ':syntax';
 use Storable     ();
 use MIME::Base64 ();
 
@@ -19,8 +18,13 @@ $VERSION = '0.15';
 # crydec
 my $CIPHER = undef;
 
+# cache session here instead of flushing/reading from cookie all the time
+my $SESSION = undef;
+
 sub init {
-    my ($class) = @_;
+    my ($self) = @_;
+
+    $self->SUPER::init();
 
     my $key = setting("session_cookie_key")  # XXX default to smth with warning
       or die "The setting session_cookie_key must be defined";
@@ -31,16 +35,20 @@ sub init {
     );
 }
 
-sub new {
-    my $self = Dancer::Object::new(@_);
-
-    # id is not needed here because the whole serialized session is
-    # the "id"
-    return $self;
+# return our cached ID if we have it instead of looking in a cookie
+sub read_session_id {
+    my ($self) = @_;
+    return $SESSION->id
+      if defined $SESSION;
+    return $self->SUPER::read_session_id;
 }
 
 sub retrieve {
     my ($class, $id) = @_;
+    # if we have a cached session, hand that back instead
+    # of decrypting again
+    return $SESSION
+      if $SESSION && $SESSION->id eq $id;
 
     my $ses = eval {
         # 1. decrypt and deserialize $id
@@ -50,59 +58,48 @@ sub retrieve {
         $plain_text && Storable::thaw($plain_text);
     };
 
-    $ses and $ses->{id} = $id;
-
-    return $ses;
+    return $SESSION = $ses;
 }
 
 sub create {
     my $class = shift;
-    return Dancer::Session::Cookie->new(id => 'empty');
+    # cache the newly created session
+    return $SESSION = Dancer::Session::Cookie->new;
 }
 
+# we don't write session ID when told; we do it in the after hook
+sub write_session_id {}
 
-# session_name was introduced to Dancer::Session::Abstract in 1.176
-# we have 1.130 as the minimum
-sub session_name {
-    my $self = shift;
-    return eval { $self->SUPER::session_name } || setting("session_name") || "dancer.session";
-}
-
-sub flush {
-    my $self = shift;
-
-    # 1. serialize and encrypt session
-    delete $self->{id};
-    my $cipher_text = _encrypt(Storable::freeze($self));
-
-    # 2. write it into the cookie session ID
-    $self->write_session_id( $self->{id} = $cipher_text );
-
-    return 1;
-}
+# we don't flush when we're told; we do it in the after hook
+sub flush {}
 
 sub destroy {
     my $self = shift;
 
-    # 1. clear session data
-    %$self = ();
-
-    # 2. set dummy session ID and write it to the cookie to clear browser-side
-    $self->{id} = 'empty';
-    $self->write_session_id;
+    # gross hack; replace guts with new session guts
+    %$self = %{ Dancer::Session::Cookie->new };
 
     return 1;
 }
 
-# Copied from Dancer::Session::Abstract and modified to add support
-# for session_cookie_path
-sub write_session_id {
-    my ($class, $id) = @_;
+# Copied from Dancer::Session::Abstract::write_session_id and
+# refactored for testing
+hook 'after' => sub {
+    if ( $SESSION ) {
+        my $c = Dancer::Cookie->new($SESSION->_cookie_params);
+        Dancer::Cookies->set_cookie_object($c->name => $c);
+        undef $SESSION; # clear for next request
+    }
+};
 
-    my $name = session_name();
+# modified from Dancer::Session::Abstract::write_session_id to add
+# support for session_cookie_path
+sub _cookie_params {
+    my $self = shift;
+    my $name = $self->session_name;
     my %cookie = (
         name   => $name,
-        value  => $id,
+        value  => $self->_cookie_value,
         path   => setting('session_cookie_path') || '/',
         domain => setting('session_domain'),
         secure => setting('session_secure'),
@@ -115,9 +112,13 @@ sub write_session_id {
         $expires = Dancer::Cookie::_epoch_to_gmtstring(time + $expires) if $expires =~ /^\d+$/;
         $cookie{expires} = $expires;
     }
+    return %cookie;
+}
 
-    my $c = Dancer::Cookie->new(%cookie);
-    Dancer::Cookies->set_cookie_object($name => $c);
+# refactored for testing
+sub _cookie_value {
+    my $self = shift;
+    return _encrypt(Storable::freeze($self));
 }
 
 sub _encrypt {

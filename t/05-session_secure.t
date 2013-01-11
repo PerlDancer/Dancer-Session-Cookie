@@ -20,8 +20,8 @@ note "session_secure off"; {
     set session => "cookie";
     session foo => "bar";
 
-    my $session_cookie = Dancer::Cookies->cookies->{ $Session_Name };
-    ok !$session_cookie->secure;
+    my %cookie = session->_cookie_params;
+    ok !$cookie{secure}, "secure off";
 }
 
 
@@ -33,6 +33,6 @@ note "session_secure on"; {
 
     session up => "down";
 
-    my $session_cookie = Dancer::Cookies->cookies->{ $Session_Name };
-    ok $session_cookie->secure;
+    my %cookie = session->_cookie_params;
+    ok $cookie{secure}, "secure on";
 }

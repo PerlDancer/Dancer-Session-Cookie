@@ -16,9 +16,8 @@ note "test setup"; {
 
 note "default path"; {
     my $session = Dancer::Session::Cookie->create;
-    $session->flush;
-
-    is cookies->{"dancer.session"}->path, "/";
+    my %cookie = $session->_cookie_params;
+    is $cookie{path}, "/";
 }
 
 
@@ -26,9 +25,8 @@ note "set the path"; {
     set session_cookie_path => "/some/thing";
 
     my $session = Dancer::Session::Cookie->create;
-    $session->flush;
-
-    is cookies->{"dancer.session"}->path, "/some/thing";
+    my %cookie = $session->_cookie_params;
+    is $cookie{path}, "/some/thing";
 }
 
 done_testing;
