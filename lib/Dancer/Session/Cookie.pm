@@ -4,6 +4,7 @@ use strict;
 use warnings;
 use base 'Dancer::Session::Abstract';
 
+use Session::Storage::Secure;
 use Crypt::CBC;
 use String::CRC32;
 use Crypt::Rijndael;
@@ -17,6 +18,7 @@ $VERSION = '0.15';
 
 # crydec
 my $CIPHER = undef;
+my $STORE = undef;
 
 # cache session here instead of flushing/reading from cookie all the time
 my $SESSION = undef;
@@ -29,9 +31,16 @@ sub init {
     my $key = setting("session_cookie_key")  # XXX default to smth with warning
       or die "The setting session_cookie_key must be defined";
 
+    my $expires = setting('session_expires');
+
     $CIPHER = Crypt::CBC->new(
         -key    => $key,
         -cipher => 'Rijndael',
+    );
+
+    $STORE = Session::Storage::Secure->new(
+        secret_key => $key,
+        ( $expires ? (default_duration => $expires) : () ),
     );
 }
 
@@ -51,14 +60,25 @@ sub retrieve {
       if $SESSION && $SESSION->id eq $id;
 
     my $ses = eval {
-        # 1. decrypt and deserialize $id
-        my $plain_text = _decrypt($id);
-
-        # 2. deserialize
-        $plain_text && Storable::thaw($plain_text);
+        if ( my $hash = $STORE->decode($id) ) {
+            # we recover a plain hash, so reconstruct into object
+            bless $hash, $class;
+        }
+        else {
+            _old_retrieve($id)
+        }
     };
 
     return $SESSION = $ses;
+}
+
+# support decoding old cookies
+sub _old_retrieve {
+    my ($id) = @_;
+    # 1. decrypt and deserialize $id
+    my $plain_text = _old_decrypt($id);
+    # 2. deserialize
+    $plain_text && Storable::thaw($plain_text);
 }
 
 sub create {
@@ -97,9 +117,10 @@ hook 'after' => sub {
 sub _cookie_params {
     my $self = shift;
     my $name = $self->session_name;
+    my $expires = setting('session_expires');
     my %cookie = (
         name   => $name,
-        value  => $self->_cookie_value,
+        value  => $self->_cookie_value($expires),
         path   => setting('session_cookie_path') || '/',
         domain => setting('session_domain'),
         secure => setting('session_secure'),
@@ -117,26 +138,13 @@ sub _cookie_params {
 
 # refactored for testing
 sub _cookie_value {
-    my $self = shift;
-    return _encrypt(Storable::freeze($self));
+    my ($self, $expires) = @_;
+    # copy self guts so we aren't serializing a blessed object
+    return $STORE->encode({ %$self }, $expires);
 }
 
-sub _encrypt {
-    my $plain_text = shift;
-
-    my $crc32 = String::CRC32::crc32($plain_text);
-
-    # XXX should gzip data if it grows too big. CRC32 won't be needed
-    # then.
-    my $res =
-      MIME::Base64::encode($CIPHER->encrypt(pack('La*', $crc32, $plain_text)),
-        q{});
-    $res =~ tr{=+/}{_*-};    # cookie-safe Base64
-
-    return $res;
-}
-
-sub _decrypt {
+# legacy algorithm
+sub _old_decrypt {
     my $cookie = shift;
 
     $cookie =~ tr{_*-}{=+/};
@@ -206,12 +214,13 @@ only) cookie will be used if set.
 
 =head1 DEPENDENCY
 
-This module depends on L<Crypt::CBC>, L<Crypt::Rijndael>,
-L<String::CRC32>, L<Storable> and L<MIME::Base64>.
+This module depends on L<Session::Storage::Secure>.  Legacy support is provided
+using L<Crypt::CBC>, L<Crypt::Rijndael>, L<String::CRC32>, L<Storable> and
+L<MIME::Base64>.
 
 =head1 AUTHOR
 
-This module has been written by Alex Kapranoff.
+This module has been written by Alex Kapranoff, Alex Sukria, and David Golden.
 
 =head1 SEE ALSO
 
