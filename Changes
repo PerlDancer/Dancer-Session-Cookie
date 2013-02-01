@@ -2,8 +2,6 @@ Revision history for Dancer-Session-Cookie
 
 {{$NEXT}}
 
-0.001     2013-02-01 14:13:40 America/New_York
-
     - Now uses Session::Storage::Secure for encrypting and decrypting data;
       Legacy decryption is preserved in case old cookies need to be read.
 

@@ -76,7 +76,7 @@
    "provides" : {
       "Dancer::Session::Cookie" : {
          "file" : "lib/Dancer/Session/Cookie.pm",
-         "version" : "0.001"
+         "version" : "0.16"
       }
    },
    "release_status" : "stable",
@@ -91,6 +91,6 @@
          "web" : "https://github.com/dagolden/dancer-session-cookie"
       }
    },
-   "version" : "0.001"
+   "version" : "0.16"
 }
 
