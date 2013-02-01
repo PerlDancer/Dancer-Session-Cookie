@@ -1,5 +1,8 @@
 Revision history for Dancer-Session-Cookie
 
+{{$NEXT}}
+
+
     * Fix session destruction bug to ensure session is overwritten in
       the browser, not just no longer sent (David Golden)
 

@@ -1,7 +1,9 @@
 package Dancer::Session::Cookie;
-
 use strict;
 use warnings;
+# ABSTRACT: Encrypted cookie-based session backend for Dancer
+# VERSION
+
 use base 'Dancer::Session::Abstract';
 
 use Session::Storage::Secure;
@@ -12,9 +14,6 @@ use Crypt::Rijndael;
 use Dancer ':syntax';
 use Storable     ();
 use MIME::Base64 ();
-
-use vars '$VERSION';
-$VERSION = '0.15';
 
 # crydec
 my $CIPHER = undef;
@@ -158,12 +157,6 @@ sub _old_decrypt {
 1;
 __END__
 
-=pod
-
-=head1 NAME
-
-Dancer::Session::Cookie - Encrypted cookie-based session backend for Dancer
-
 =head1 SYNOPSIS
 
 Your F<config.yml>:
@@ -218,24 +211,11 @@ This module depends on L<Session::Storage::Secure>.  Legacy support is provided
 using L<Crypt::CBC>, L<Crypt::Rijndael>, L<String::CRC32>, L<Storable> and
 L<MIME::Base64>.
 
-=head1 AUTHOR
-
-This module has been written by Alex Kapranoff, Alex Sukria, and David Golden.
-
 =head1 SEE ALSO
 
 See L<Dancer::Session> for details about session usage in route handlers.
 
 See L<Plack::Middleware::Session::Cookie>,
 L<Catalyst::Plugin::CookiedSession>, L<Mojolicious::Controller/session> for alternative implementation of this mechanism.
-
-=head1 COPYRIGHT
-
-This module is copyright (c) 2009-2011 Alex Kapranoff <kappa@cpan.org>.
-
-=head1 LICENSE
-
-This module is free software and is released under the same terms as Perl
-itself.
 
 =cut

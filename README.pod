@@ -1,0 +1,115 @@
+=pod
+
+=head1 NAME
+
+Dancer::Session::Cookie - Encrypted cookie-based session backend for Dancer
+
+=head1 VERSION
+
+version 0.001
+
+=head1 SYNOPSIS
+
+Your F<config.yml>:
+
+    session: "cookie"
+    session_cookie_key: "this random key IS NOT very random"
+
+=head1 DESCRIPTION
+
+This module implements a session engine for sessions stored entirely
+in cookies. Usually only B<session id> is stored in cookies and
+the session data itself is saved in some external storage, e.g.
+database. This module allows to avoid using external storage at
+all.
+
+Since server cannot trust any data returned by client in cookies, this
+module uses cryptography to ensure integrity and also secrecy. The
+data your application stores in sessions is completely protected from
+both tampering and analysis on the client-side.
+
+=head1 CONFIGURATION
+
+The setting B<session> should be set to C<cookie> in order to use this session
+engine in a Dancer application. See L<Dancer::Config>.
+
+A mandatory setting is needed as well: B<session_cookie_key>, which should
+contain a random string of at least 16 characters (shorter keys are
+not cryptographically strong using AES in CBC mode).
+
+Here is an example configuration to use in your F<config.yml>:
+
+    session: "cookie"
+    session_cookie_key: "kjsdf07234hjf0sdkflj12*&(@*jk"
+
+Compromising B<session_cookie_key> will disclose session data to
+clients and proxies or eavesdroppers and will also allow tampering,
+for example session theft. So, your F<config.yml> should be kept at
+least as secure as your database passwords or even more.
+
+Also, changing B<session_cookie_key> will have an effect of immediate
+invalidation of all sessions issued with the old value of key.
+
+B<session_cookie_path> can be used to control the path of the session
+cookie.  The default is /.
+
+The global B<session_secure> setting is honoured and a secure (https
+only) cookie will be used if set.
+
+=head1 DEPENDENCY
+
+This module depends on L<Session::Storage::Secure>.  Legacy support is provided
+using L<Crypt::CBC>, L<Crypt::Rijndael>, L<String::CRC32>, L<Storable> and
+L<MIME::Base64>.
+
+=head1 SEE ALSO
+
+See L<Dancer::Session> for details about session usage in route handlers.
+
+See L<Plack::Middleware::Session::Cookie>,
+L<Catalyst::Plugin::CookiedSession>, L<Mojolicious::Controller/session> for alternative implementation of this mechanism.
+
+=for :stopwords cpan testmatrix url annocpan anno bugtracker rt cpants kwalitee diff irc mailto metadata placeholders metacpan
+
+=head1 SUPPORT
+
+=head2 Bugs / Feature Requests
+
+Please report any bugs or feature requests through the issue tracker
+at L<https://github.com/dagolden/dancer-session-cookie/issues>.
+You will be notified automatically of any progress on your issue.
+
+=head2 Source Code
+
+This is open source software.  The code repository is available for
+public review and contribution under the terms of the license.
+
+L<https://github.com/dagolden/dancer-session-cookie>
+
+  git clone git://github.com/dagolden/dancer-session-cookie.git
+
+=head1 AUTHORS
+
+=over 4
+
+=item *
+
+Alex Kapranoff <kappa@cpan.org>
+
+=item *
+
+Alex Sukria <sukria@cpan.org>
+
+=item *
+
+David Golden <dagolden@cpan.org>
+
+=back
+
+=head1 COPYRIGHT AND LICENSE
+
+This software is copyright (c) 2013 by Alex Kapranoff.
+
+This is free software; you can redistribute it and/or modify it under
+the same terms as the Perl 5 programming language system itself.
+
