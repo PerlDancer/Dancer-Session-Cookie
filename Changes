@@ -2,19 +2,21 @@ Revision history for Dancer-Session-Cookie
 
 {{$NEXT}}
 
+    - Now uses Session::Storage::Secure for encrypting and decrypting data;
+      Legacy decryption is preserved in case old cookies need to be read.
 
-    * Fix session destruction bug to ensure session is overwritten in
+    - Fix session destruction bug to ensure session is overwritten in
       the browser, not just no longer sent (David Golden)
 
-0.15	2011-05-21
+0.15    2011-05-21
 
     * skip test 02-configfile.t if YAML is not present
       FIX smoker test failure.
       (Alexis Sukrieh)
 
-0.14	2011-03-12
+0.14    2011-03-12
     
-	[ Michael G. Schwern ]
+        [ Michael G. Schwern ]
 
     * Fix for Dancer > v1.3012 
     * Add support for session_secure to serve https only cookies. 
@@ -24,7 +26,7 @@ Revision history for Dancer-Session-Cookie
     * Add session_cookie_path to control the path of the cookie.
 
 0.13    Sun Nov 28 17:19:58 MSK 2010
-		Some documentation fixes. No functional change.
+                Some documentation fixes. No functional change.
 
 0.12    Thu Sep 16 13:29:09 MSD 2010
         Fix a warning when testing against newer Dancer. No functional
