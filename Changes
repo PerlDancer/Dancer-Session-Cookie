@@ -2,6 +2,8 @@ Revision history for Dancer-Session-Cookie
 
 {{$NEXT}}
 
+    - Fix localhost address used in tests
+
 0.16      2013-02-01 14:39:14 America/New_York
 
     - Now uses Session::Storage::Secure for encrypting and decrypting data;

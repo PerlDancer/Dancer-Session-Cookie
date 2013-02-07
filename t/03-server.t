@@ -27,21 +27,21 @@ test_tcp(
         for my $jar (@jars) {
             $ua->cookie_jar( $jar );
 
-            my $res = $ua->get("http://0.0:$port/foo");
+            my $res = $ua->get("http://127.0.0.1:$port/foo");
             is $res->content, "hits: 0, last_hit: ";
 
-            $res = $ua->get("http://0.0:$port/bar");
+            $res = $ua->get("http://127.0.0.1:$port/bar");
             is $res->content, "hits: 1, last_hit: foo";
 
-            $res = $ua->get("http://0.0:$port/baz");
+            $res = $ua->get("http://127.0.0.1:$port/baz");
             is $res->content, "hits: 2, last_hit: bar";
         }
 
         $ua->cookie_jar($jars[0]);
-        my $res = $ua->get("http://0.0:$port/wibble");
+        my $res = $ua->get("http://127.0.0.1:$port/wibble");
         is $res->content, "hits: 3, last_hit: baz", "session not overwritten";
 
-        $res = $ua->get("http://0.0:$port/clear");
+        $res = $ua->get("http://127.0.0.1:$port/clear");
         is $res->content, "hits: 0, last_hit: ", "session destroyed";
 
     },
