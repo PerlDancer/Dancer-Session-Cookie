@@ -104,6 +104,12 @@ sub destroy {
 # Copied from Dancer::Session::Abstract::write_session_id and
 # refactored for testing
 hook 'after' => sub {
+    my $response = shift;
+
+    # UGH! Awful hack because Dancer instantiates responses
+    # and headers too many times and locks out new cookies
+    $response->{_built_cookies} = 0;
+
     if ( $SESSION ) {
         my $c = Dancer::Cookie->new($SESSION->_cookie_params);
         Dancer::Cookies->set_cookie_object($c->name => $c);
