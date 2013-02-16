@@ -2,6 +2,9 @@ Revision history for Dancer-Session-Cookie
 
 {{$NEXT}}
 
+    - Hack around Dancer bug that renders the request object headers
+      repeatedly and locks out setting cookies after the first time
+
 0.17      2013-02-07 15:36:58 America/New_York
 
     - Fix localhost address used in tests
