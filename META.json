@@ -46,6 +46,7 @@
             "Crypt::Rijndael" : "0",
             "Dancer" : "0",
             "Dancer::Cookie" : "0",
+            "Dancer::Cookies" : "0",
             "Dancer::Session::Abstract" : "0",
             "MIME::Base64" : "0",
             "Session::Storage::Secure" : "0",

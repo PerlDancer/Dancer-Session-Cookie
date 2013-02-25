@@ -13,9 +13,10 @@ use Crypt::Rijndael;
 use Time::Duration::Parse;
 
 use Dancer ':syntax';
-use Dancer::Cookie ();
-use Storable       ();
-use MIME::Base64   ();
+use Dancer::Cookie  ();
+use Dancer::Cookies ();
+use Storable        ();
+use MIME::Base64    ();
 
 # crydec
 my $CIPHER = undef;
@@ -122,15 +123,15 @@ hook 'after' => sub {
 # modified from Dancer::Session::Abstract::write_session_id to add
 # support for session_cookie_path
 sub _cookie_params {
-    my $self   = shift;
-    my $name   = $self->session_name;
+    my $self     = shift;
+    my $name     = $self->session_name;
     my $duration = $self->_session_expires_as_duration;
-    my %cookie = (
-        name    => $name,
-        value   => $self->_cookie_value,
-        path    => setting('session_cookie_path') || '/',
-        domain  => setting('session_domain'),
-        secure  => setting('session_secure'),
+    my %cookie   = (
+        name      => $name,
+        value     => $self->_cookie_value,
+        path      => setting('session_cookie_path') || '/',
+        domain    => setting('session_domain'),
+        secure    => setting('session_secure'),
         http_only => defined( setting("session_is_http_only") )
         ? setting("session_is_http_only")
         : 1,
@@ -156,7 +157,7 @@ sub _session_expires_as_duration {
     return unless defined $session_expires;
     my $duration = eval { parse_duration($session_expires) };
     die "Could not parse session_expires: $session_expires"
-        unless defined $duration;
+      unless defined $duration;
     return $duration;
 }
 
