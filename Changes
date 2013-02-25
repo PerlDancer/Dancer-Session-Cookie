@@ -2,6 +2,8 @@ Revision history for Dancer-Session-Cookie
 
 {{$NEXT}}
 
+0.19      2013-02-24 22:49:14 America/New_York
+
     - Fix bug with session_expires always expiring a cookie early
 
 0.18      2013-02-16 00:16:32 America/New_York
