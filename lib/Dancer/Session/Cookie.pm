@@ -10,14 +10,16 @@ use Session::Storage::Secure;
 use Crypt::CBC;
 use String::CRC32;
 use Crypt::Rijndael;
+use Time::Duration::Parse;
 
 use Dancer ':syntax';
-use Storable     ();
-use MIME::Base64 ();
+use Dancer::Cookie ();
+use Storable       ();
+use MIME::Base64   ();
 
 # crydec
 my $CIPHER = undef;
-my $STORE = undef;
+my $STORE  = undef;
 
 # cache session here instead of flushing/reading from cookie all the time
 my $SESSION = undef;
@@ -27,10 +29,10 @@ sub init {
 
     $self->SUPER::init();
 
-    my $key = setting("session_cookie_key")  # XXX default to smth with warning
+    my $key = setting("session_cookie_key") # XXX default to smth with warning
       or die "The setting session_cookie_key must be defined";
 
-    my $expires = setting('session_expires');
+    my $duration = $self->_session_expires_as_duration;
 
     $CIPHER = Crypt::CBC->new(
         -key    => $key,
@@ -39,7 +41,7 @@ sub init {
 
     $STORE = Session::Storage::Secure->new(
         secret_key => $key,
-        ( $expires ? (default_duration => $expires) : () ),
+        ( $duration ? ( default_duration => $duration ) : () ),
     );
 }
 
@@ -52,7 +54,7 @@ sub read_session_id {
 }
 
 sub retrieve {
-    my ($class, $id) = @_;
+    my ( $class, $id ) = @_;
     # if we have a cached session, hand that back instead
     # of decrypting again
     return $SESSION
@@ -64,7 +66,7 @@ sub retrieve {
             bless $hash, $class;
         }
         else {
-            _old_retrieve($id)
+            _old_retrieve($id);
         }
     };
 
@@ -87,10 +89,10 @@ sub create {
 }
 
 # we don't write session ID when told; we do it in the after hook
-sub write_session_id {}
+sub write_session_id { }
 
 # we don't flush when we're told; we do it in the after hook
-sub flush {}
+sub flush { }
 
 sub destroy {
     my $self = shift;
@@ -110,9 +112,9 @@ hook 'after' => sub {
     # and headers too many times and locks out new cookies
     $response->{_built_cookies} = 0;
 
-    if ( $SESSION ) {
-        my $c = Dancer::Cookie->new($SESSION->_cookie_params);
-        Dancer::Cookies->set_cookie_object($c->name => $c);
+    if ($SESSION) {
+        my $c = Dancer::Cookie->new( $SESSION->_cookie_params );
+        Dancer::Cookies->set_cookie_object( $c->name => $c );
         undef $SESSION; # clear for next request
     }
 };
@@ -120,32 +122,42 @@ hook 'after' => sub {
 # modified from Dancer::Session::Abstract::write_session_id to add
 # support for session_cookie_path
 sub _cookie_params {
-    my $self = shift;
-    my $name = $self->session_name;
-    my $expires = setting('session_expires');
+    my $self   = shift;
+    my $name   = $self->session_name;
+    my $duration = $self->_session_expires_as_duration;
     my %cookie = (
-        name   => $name,
-        value  => $self->_cookie_value($expires),
-        path   => setting('session_cookie_path') || '/',
-        domain => setting('session_domain'),
-        secure => setting('session_secure'),
-        http_only => defined(setting("session_is_http_only")) ?
-                     setting("session_is_http_only") : 1,
+        name    => $name,
+        value   => $self->_cookie_value,
+        path    => setting('session_cookie_path') || '/',
+        domain  => setting('session_domain'),
+        secure  => setting('session_secure'),
+        http_only => defined( setting("session_is_http_only") )
+        ? setting("session_is_http_only")
+        : 1,
     );
-    if (my $expires = setting('session_expires')) {
-        # It's # of seconds from the current time
-        # Otherwise just feed it through.
-        $expires = Dancer::Cookie::_epoch_to_gmtstring(time + $expires) if $expires =~ /^\d+$/;
-        $cookie{expires} = $expires;
+    if ( defined $duration ) {
+        $cookie{expires} = time + $duration;
     }
     return %cookie;
 }
 
 # refactored for testing
 sub _cookie_value {
-    my ($self, $expires) = @_;
-    # copy self guts so we aren't serializing a blessed object
-    return $STORE->encode({ %$self }, $expires);
+    my ($self) = @_;
+    # copy self guts so we aren't serializing a blessed object.
+    # we don't set expires, because default_duration will handle it
+    return $STORE->encode( {%$self} );
+}
+
+# session_expires could be natural language
+sub _session_expires_as_duration {
+    my ($self) = @_;
+    my $session_expires = setting('session_expires');
+    return unless defined $session_expires;
+    my $duration = eval { parse_duration($session_expires) };
+    die "Could not parse session_expires: $session_expires"
+        unless defined $duration;
+    return $duration;
 }
 
 # legacy algorithm
@@ -154,9 +166,9 @@ sub _old_decrypt {
 
     $cookie =~ tr{_*-}{=+/};
 
-    $SIG{__WARN__} = sub {};
-    my ($crc32, $plain_text) = unpack "La*",
-      $CIPHER->decrypt(MIME::Base64::decode($cookie));
+    $SIG{__WARN__} = sub { };
+    my ( $crc32, $plain_text ) = unpack "La*",
+      $CIPHER->decrypt( MIME::Base64::decode($cookie) );
     return $crc32 == String::CRC32::crc32($plain_text) ? $plain_text : undef;
 }
 
