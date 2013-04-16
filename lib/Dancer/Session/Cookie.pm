@@ -120,6 +120,11 @@ hook 'after' => sub {
     }
 };
 
+# Make sure that the session is initially undefined for every request
+hook 'before' => sub {
+	undef $SESSION;
+};
+
 # modified from Dancer::Session::Abstract::write_session_id to add
 # support for session_cookie_path
 sub _cookie_params {
