@@ -6,7 +6,7 @@
       "David Golden <dagolden@cpan.org>"
    ],
    "dynamic_config" : 0,
-   "generated_by" : "Dist::Zilla version 4.300029, CPAN::Meta::Converter version 2.120921",
+   "generated_by" : "Dist::Zilla version 4.300034, CPAN::Meta::Converter version 2.130880",
    "license" : [
       "perl_5"
    ],
@@ -83,7 +83,7 @@
    "provides" : {
       "Dancer::Session::Cookie" : {
          "file" : "lib/Dancer/Session/Cookie.pm",
-         "version" : "0.19"
+         "version" : "0.20"
       }
    },
    "release_status" : "stable",
@@ -98,6 +98,10 @@
          "web" : "https://github.com/dagolden/dancer-session-cookie"
       }
    },
-   "version" : "0.19"
+   "version" : "0.20",
+   "x_contributors" : [
+      "Michael G. Schwern <schwern@pobox.com>",
+      "Neil Kirsopp <neil@broadbean.com>"
+   ]
 }
 

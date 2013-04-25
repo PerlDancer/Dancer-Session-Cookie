@@ -1,12 +1,14 @@
 =pod
 
+=encoding utf-8
+
 =head1 NAME
 
 Dancer::Session::Cookie - Encrypted cookie-based session backend for Dancer
 
 =head1 VERSION
 
-version 0.19
+version 0.20
 
 =head1 SYNOPSIS
 
@@ -103,6 +105,20 @@ Alex Sukria <sukria@cpan.org>
 =item *
 
 David Golden <dagolden@cpan.org>
+
+=back
+
+=head1 CONTRIBUTORS
+
+=over 4
+
+=item *
+
+Michael G. Schwern <schwern@pobox.com>
+
+=item *
+
+Neil Kirsopp <neil@broadbean.com>
 
 =back
 
