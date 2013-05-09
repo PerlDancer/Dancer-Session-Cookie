@@ -12,7 +12,7 @@ use String::CRC32;
 use Crypt::Rijndael;
 use Time::Duration::Parse;
 
-use Dancer ':syntax';
+use Dancer 1.3113 ':syntax'; # 1.3113 for on_reset_state and fixed after hook
 use Dancer::Cookie  ();
 use Dancer::Cookies ();
 use Storable        ();
@@ -24,6 +24,8 @@ my $STORE  = undef;
 
 # cache session here instead of flushing/reading from cookie all the time
 my $SESSION = undef;
+
+sub is_lazy { 1 }; # avoid calling flush needlessly
 
 sub init {
     my ($self) = @_;
@@ -109,20 +111,20 @@ sub destroy {
 hook 'after' => sub {
     my $response = shift;
 
-    # UGH! Awful hack because Dancer instantiates responses
-    # and headers too many times and locks out new cookies
-    $response->{_built_cookies} = 0;
-
     if ($SESSION) {
+        # UGH! Awful hack because Dancer instantiates responses
+        # and headers too many times and locks out new cookies
+        $response->{_built_cookies} = 0;
+
         my $c = Dancer::Cookie->new( $SESSION->_cookie_params );
         Dancer::Cookies->set_cookie_object( $c->name => $c );
-        undef $SESSION; # clear for next request
     }
 };
 
 # Make sure that the session is initially undefined for every request
-hook 'before' => sub {
-	undef $SESSION;
+hook 'on_reset_state' => sub {
+    my $is_forward = shift;
+    undef $SESSION unless $is_forward;
 };
 
 # modified from Dancer::Session::Abstract::write_session_id to add
@@ -243,3 +245,5 @@ See L<Plack::Middleware::Session::Cookie>,
 L<Catalyst::Plugin::CookiedSession>, L<Mojolicious::Controller/session> for alternative implementation of this mechanism.
 
 =cut
+
+# vim: ts=4 sts=4 sw=4 et:
