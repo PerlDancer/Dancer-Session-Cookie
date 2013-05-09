@@ -2,6 +2,9 @@ Revision history for Dancer-Session-Cookie
 
 {{$NEXT}}
 
+    - Require Dancer 1.3113 and use its new features to fix more bugs
+      that caused sessions to not be set or reset correctly
+
 0.20      2013-04-25 11:41:22 America/New_York
 
     - Fix bug where session wasn't cleared correctly if route handler

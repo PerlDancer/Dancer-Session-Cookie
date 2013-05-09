@@ -8,7 +8,7 @@ Dancer::Session::Cookie - Encrypted cookie-based session backend for Dancer
 
 =head1 VERSION
 
-version 0.20
+version 0.21
 
 =head1 SYNOPSIS
 
@@ -119,6 +119,10 @@ Michael G. Schwern <schwern@pobox.com>
 =item *
 
 Neil Kirsopp <neil@broadbean.com>
+
+=item *
+
+Nick S. Knutov <nick@knutov.com>
 
 =back
 
