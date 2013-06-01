@@ -6,7 +6,7 @@ use warnings;
 
 use base 'Dancer::Session::Abstract';
 
-use Session::Storage::Secure;
+use Session::Storage::Secure 0.007;
 use Crypt::CBC;
 use String::CRC32;
 use Crypt::Rijndael;
