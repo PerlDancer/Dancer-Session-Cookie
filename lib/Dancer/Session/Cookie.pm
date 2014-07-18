@@ -88,7 +88,6 @@ sub _old_retrieve {
 }
 
 sub create {
-    my $class = shift;
     # cache the newly created session
     return $SESSION = Dancer::Session::Cookie->new;
 }
