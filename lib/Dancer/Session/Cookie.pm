@@ -6,7 +6,7 @@ use warnings;
 
 use base 'Dancer::Session::Abstract';
 
-use Session::Storage::Secure 0.007;
+use Session::Storage::Secure 0.010;
 use Crypt::CBC;
 use String::CRC32;
 use Crypt::Rijndael;
@@ -45,6 +45,8 @@ sub init {
     $STORE = Session::Storage::Secure->new(
         secret_key => $key,
         ( $duration ? ( default_duration => $duration ) : () ),
+        sereal_encoder_options => { snappy => 1, stringify_unknown => 1 },
+        sereal_decoder_options => { validate_utf8 => 1 },
     );
 }
 
