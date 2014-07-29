@@ -9,11 +9,16 @@ Revision history for Dancer-Session-Cookie
 
  [ENHANCEMENTS]
 
- [MISC]
+ [NEW FEATURES]
 
+ [STATISTICS]
+
+0.24 2014-07-29
+ [MISC]
  - Release again, this time with real co-maint permissions.
 
  [STATISTICS]
+ - code churn: 1 file changed, 57 insertions(+), 53 deletions(-)
 
 0.23 2014-07-17
  [CHANGED]
@@ -61,8 +66,8 @@ Revision history for Dancer-Session-Cookie
  - Fix for Dancer > v1.3012 
  - Add support for session_secure to serve https only cookies. 
  - Add missing MYMETA.yml 
- - Make Dancer::Session::Cookie honor the session_name setting	   added to
-   Dancer::Session::Abstract
+ - Make Dancer::Session::Cookie honor the session_name setting		
+   added to Dancer::Session::Abstract
  - Add session_cookie_path to control the path of the cookie.
 
 0.13 2010-11-28T17:19:58Z
