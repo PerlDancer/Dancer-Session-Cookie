@@ -7,7 +7,8 @@ Revision history for Dancer-Session-Cookie
 
  [DOCUMENTATION]
 
- [ENHANCEMENTS]
+ [MISC]
+ - Move tests from Test::TCP to Test::WWW::Mechanize::PSGI.
 
  [NEW FEATURES]
 
