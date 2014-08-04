@@ -5,66 +5,55 @@ use warnings;
 
 use Test::More import => ["!pass"];
 
-plan skip_all => "Test::TCP required" unless eval {
-    require Test::TCP; Test::TCP->import; 1;
+plan skip_all => "Test::WWW::Mechanize::PSGI required" unless eval {
+    require Test::WWW::Mechanize::PSGI;
 };
 
 plan skip_all => "LWP required" unless eval {
     require LWP;
 };
 
-test_tcp(
-    client => sub {
-        my $port = shift;
+{
+    package MyApp;
 
-        require LWP::UserAgent;
-        require HTTP::Cookies;
+    use Dancer ':tests', ':syntax';
 
-        my $ua = LWP::UserAgent->new;
-        my $jar = HTTP::Cookies->new;
-        $ua->cookie_jar( $jar );
+    set appdir              => '';          # quiet warnings not having an appdir
+    set access_log          => 0;           # quiet startup banner
 
-        my $res = $ua->get("http://127.0.0.1:$port/");
-        is $res->content, "login page";
+    set session_cookie_key  => "John has a long mustache";
+    set session             => "cookie";
 
-    },
-    server => sub {
-        my $port = shift;
+    hook before => sub { 
+        if ( !session('uid') 
+            && request->path_info !~ m{^/login} 
+        ) {
+            return redirect '/login/';
+        }
+    };
 
-        use Dancer ':tests', ':syntax';
+    get '/logout/?' => sub {
+        session 'uid'     => undef;
+        session->destroy;
+        return redirect '/';
+    };
 
-        set port                => $port;
-        set appdir              => '';          # quiet warnings not having an appdir
-        set access_log          => 0;           # quiet startup banner
+    any '/login/?' => sub {
+        return redirect '/' if session('uid');
 
-        set session_cookie_key  => "John has a long mustache";
-        set session             => "cookie";
+        return 'ok' if session('login');
+        session 'login' => undef;
+        return 'login page';
+    };
+}
 
-        hook before => sub { 
-            if ( !session('uid') 
-                && request->path_info !~ m{^/login} 
-            ) {
-                return redirect '/login/';
-            }
-        };
 
-        get '/logout/?' => sub {
-            session 'uid'     => undef;
-            session->destroy;
-            return redirect '/';
-        };
-
-        any '/login/?' => sub {
-            return redirect '/' if session('uid');
-
-            return 'ok' if session('login');
-            session 'login' => undef;
-            return 'login page';
-        };
-
-        dance;
-    }
+my $app = Test::WWW::Mechanize::PSGI->new(
+    app => Dancer::Handler->psgi_app
 );
+
+$app->get_ok( '/' );
+$app->content_is( 'login page' );
 
 done_testing;
 
