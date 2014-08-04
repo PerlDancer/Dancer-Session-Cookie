@@ -1,18 +1,11 @@
 Revision history for Dancer-Session-Cookie
 
-{{$NEXT}}
- [API CHANGES]
-
- [BUG FIXES]
-
- [DOCUMENTATION]
-
+0.25 2014-08-04
  [MISC]
  - Move tests from Test::TCP to Test::WWW::Mechanize::PSGI.
 
- [NEW FEATURES]
-
  [STATISTICS]
+ - code churn: 5 files changed, 138 insertions(+), 174 deletions(-)
 
 0.24 2014-07-29
  [MISC]
@@ -67,8 +60,8 @@ Revision history for Dancer-Session-Cookie
  - Fix for Dancer > v1.3012 
  - Add support for session_secure to serve https only cookies. 
  - Add missing MYMETA.yml 
- - Make Dancer::Session::Cookie honor the session_name setting		
-   added to Dancer::Session::Abstract
+ - Make Dancer::Session::Cookie honor the session_name setting		   
+      added to Dancer::Session::Abstract
  - Add session_cookie_path to control the path of the cookie.
 
 0.13 2010-11-28T17:19:58Z
