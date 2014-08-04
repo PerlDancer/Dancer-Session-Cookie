@@ -9,17 +9,14 @@ plan skip_all => "Test::WWW::Mechanize::PSGI required" unless eval {
     require Test::WWW::Mechanize::PSGI;
 };
 
-plan skip_all => "LWP required" unless eval {
-    require LWP;
-};
-
-{
+my $app = Test::WWW::Mechanize::PSGI->new( app => do {
     package MyApp;
 
     use Dancer ':tests', ':syntax';
 
-    set appdir              => '';          # quiet warnings not having an appdir
-    set access_log          => 0;           # quiet startup banner
+    set apphandler  => 'PSGI';
+    set appdir      => '';          # quiet warnings not having an appdir
+    set access_log  => 0;           # quiet startup banner
 
     set session_cookie_key  => "John has a long mustache";
     set session             => "cookie";
@@ -45,12 +42,9 @@ plan skip_all => "LWP required" unless eval {
         session 'login' => undef;
         return 'login page';
     };
-}
 
-
-my $app = Test::WWW::Mechanize::PSGI->new(
-    app => Dancer::Handler->psgi_app
-);
+    dance;
+});
 
 $app->get_ok( '/' );
 $app->content_is( 'login page' );

@@ -5,35 +5,22 @@ use warnings;
 
 use Test::More import => ["!pass"];
 
-plan skip_all => "Test::TCP required" unless eval {
-    require Test::TCP; Test::TCP->import; 1;
+plan skip_all => "Test::WWW::Mechanize::PSGI required" unless eval {
+    require Test::WWW::Mechanize::PSGI;
 };
 
-plan skip_all => "LWP required" unless eval {
-    require LWP;
-};
+my $app = create_app();
 
-test_tcp(
-    client => sub {
-        my $port = shift;
+$app->get_ok( '/xxx' );
+$app->content_is( '/xxx' );
 
-        require LWP::UserAgent;
-        require HTTP::Cookies;
-
-        my $ua = LWP::UserAgent->new;
-        my $jar = HTTP::Cookies->new;
-        $ua->cookie_jar( $jar );
-
-        my $res = $ua->get("http://127.0.0.1:$port/xxx");
-        is $res->content, "/xxx";
-
-    },
-    server => sub {
-        my $port = shift;
+sub create_app {
+    my $app = Test::WWW::Mechanize::PSGI->new( app => do {
+    package MyApp;
 
         use Dancer ':tests', ':syntax';
 
-        set port                => $port;
+        set apphandler          => 'PSGI';
         set appdir              => '';          # quiet warnings not having an appdir
         set access_log          => 0;           # quiet startup banner
 
@@ -54,7 +41,7 @@ test_tcp(
 
         dance;
     }
-);
+)}
 
 done_testing;
 

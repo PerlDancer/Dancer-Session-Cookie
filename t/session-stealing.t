@@ -7,52 +7,46 @@ use Test::More 0.96 import => ["!pass"];
 use File::Temp;
 use HTTP::Date qw/str2time/;
 
-plan skip_all => "Test::TCP required" unless eval {
-    require Test::TCP; Test::TCP->import; 1;
-};
-
-plan skip_all => "LWP required" unless eval {
-    require LWP;
-    require HTTP::Cookies;
+plan skip_all => "Test::WWW::Mechanize::PSGI required" unless eval {
+    require Test::WWW::Mechanize::PSGI;
 };
 
 my $tempdir = File::Temp->newdir;
 
-test_tcp(
-    client => sub {
-        my $port = shift;
+my $app = build_app();
 
-        # Two different browsers
-        my ($one, $two) = (HTTP::Cookies->new, HTTP::Cookies->new);
-        my ($ua_one, $ua_two) = (LWP::UserAgent->new, LWP::UserAgent->new);
-        $ua_one->cookie_jar($one);
-        $ua_two->cookie_jar($two);
+# Two different browsers
+my @mechs = map { new_mech($app) } 1..2;
 
-        my $res;
+    # Set foo to one and two respectively
+    $mechs[0]->get_ok( '/?foo=one' );
+    $mechs[1]->get_ok( '/?foo=two' );
 
-        # Set foo to one and two respectively
-        $ua_one->get("http://127.0.0.1:$port/?foo=one");
-        $ua_two->get("http://127.0.0.1:$port/?foo=two");
+    # Retrieve both stored 
+    $mechs[0]->get_ok('/');
+    $mechs[0]->content_is('one');
 
-        # Retrieve both stored 
-        $res = $ua_one->get("http://127.0.0.1:$port/");
-        is $res->content, 'one', 'One received for first cookie';
+    $mechs[1]->get_ok('/');
+    $mechs[1]->content_is('two');
 
-        $res = $ua_two->get("http://127.0.0.1:$port/");
-        is $res->content, 'two', 'Two received for second cookie';
+    $mechs[0]->get( '/die' );
+    is $mechs[0]->status => 500, "we died";
 
-        # Die against one and ensure we still get 'two' back for the second
-        $ua_one->get("http://127.0.0.1:$port/die");
+    $mechs[1]->get_ok('/');
+    $mechs[1]->content_is( 'two', 'Two received after first died' );
 
-        $res = $ua_two->get("http://127.0.0.1:$port/");
-        is $res->content, 'two', 'Two received after first died';
-    },
-    server => sub {
-        my $port = shift;
+sub new_mech { 
+    Test::WWW::Mechanize::PSGI->new( app => shift );
+}
+
+sub build_app {
+    return Test::WWW::Mechanize::PSGI->new( app => do {
+
+        package MyApp;
 
         use Dancer ':tests', ':syntax';
 
-        set port                => $port;
+        set apphandler          => 'PSGI';
         set appdir              => $tempdir;
         set access_log          => 0;           # quiet startup banner
 
@@ -73,8 +67,9 @@ test_tcp(
             return session('foo');
         };
 
-        dance;
+        return dance;
     }
 );
+}
 
 done_testing;
