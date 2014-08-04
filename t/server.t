@@ -7,13 +7,8 @@ use Test::More 0.96 import => ["!pass"];
 use File::Temp;
 use HTTP::Date qw/str2time/;
 
-plan skip_all => "Test::TCP required" unless eval {
-    require Test::TCP; Test::TCP->import; 1;
-};
-
-plan skip_all => "LWP required" unless eval {
-    require LWP;
-    require HTTP::Cookies;
+plan skip_all => "Test::WWW::Mechanize::PSGI required" unless eval {
+    require Test::WWW::Mechanize::PSGI;
 };
 
 my $tempdir = File::Temp->newdir;
@@ -55,6 +50,7 @@ my @configs = (
         label => 'expires 300',
         settings => {
             session_expires => 300,
+            session_name => undef,
         },
     },
     {
@@ -66,86 +62,83 @@ my @configs = (
 );
 
 for my $config ( @configs ) {
-    test_tcp(
-        client => sub {
-            my $port = shift;
+    my $app = create_app( $config );
+
             subtest $config->{label} => sub {
 
-                my $ua = LWP::UserAgent->new;
-                my $cookie;
                 # Simulate two different browsers with two different jars
-                my @jars = (HTTP::Cookies->new, HTTP::Cookies->new);
-                for my $jar (@jars) {
-                    $ua->cookie_jar( $jar );
+                my @mechs = map { Test::WWW::Mechanize::PSGI->new( app => $app) } 1..2;
 
-                    my $res = $ua->get("http://127.0.0.1:$port/foo");
-                    is $res->content, "hits: 0, last_hit: ";
-                    $cookie = extract_cookie($res, $config->{settings}{session_name});
+            for my $mech (@mechs) {
+                subtest 'one browser' => sub {
+                    $mech->get_ok( '/foo' );
+                    $mech->content_is( 'hits: 0, last_hit: ');
+                    my $cookie = extract_cookie($mech->res, $config->{settings}{session_name});
                     ok $cookie, "session cookie set"
-                        or diag explain $res->header('set-cookie');
+                        or diag explain $mech->res->header('set-cookie');
 
-                    $res = $ua->get("http://127.0.0.1:$port/bar");
-                    $cookie = extract_cookie($res, $config->{settings}{session_name});
-                    is( $res->content, "hits: 1, last_hit: foo")
-                        or diag explain $res->header('set-cookie');
+                    $mech->get_ok( '/bar' );
+                    $cookie = extract_cookie($mech->res, $config->{settings}{session_name});
+                    $mech->content_is( "hits: 1, last_hit: foo")
+                        or diag explain $mech->res->header('set-cookie');
 
-                    $res = $ua->get("http://127.0.0.1:$port/forward");
-                    is $res->content, "hits: 2, last_hit: bar", "session not overwritten";
+                    $mech->get_ok( '/forward' );
+                    $mech->content_is( "hits: 2, last_hit: bar", "session not overwritten" );
 
-                    $res = $ua->get("http://127.0.0.1:$port/baz");
-                    is $res->content, "hits: 3, last_hit: whatever";
-
+                    $mech->get_ok( '/baz' );
+                    $mech->content_is("hits: 3, last_hit: whatever");
                 }
 
-                $ua->cookie_jar($jars[0]);
-                my $res = $ua->get("http://127.0.0.1:$port/wibble");
-                is $res->content, "hits: 4, last_hit: baz", "session not overwritten";
+            }
 
-                $res = $ua->get("http://127.0.0.1:$port/clear");
-                is $res->content, "hits: 0, last_hit: ", "session destroyed";
+                $mechs[0]->get_ok( '/wibble' );
+                $mechs[0]->content_is("hits: 4, last_hit: baz", "session not overwritten");
+
+                $mechs[0]->get_ok("/clear");
+                $mechs[0]->content_is( "hits: 0, last_hit: ", "session destroyed" );
             };
-        },
-        server => sub {
-            my $port = shift;
+}
 
-            use Dancer ':tests', ':syntax';
 
-            set port                => $port;
-            set appdir              => $tempdir;
-            set access_log          => 0;           # quiet startup banner
+sub create_app {
+    my $config = shift;
 
-            set session_cookie_key  => "John has a long mustache";
-            set session             => "cookie";
-            set show_traces => 1;
-            set warnings => 1;
-            set show_errors => 1;
+    use Dancer ':tests', ':syntax';
 
-            set %{$config->{settings}} if %{$config->{settings}};
+    set apphandler          => 'PSGI';
+    set appdir              => $tempdir;
+    set access_log          => 0;           # quiet startup banner
 
-            get "/clear" => sub {
-                session "useless" =>  1; # force write/flush
-                session->destroy;
-                redirect '/postclear';
-            };
+    set session_cookie_key  => "John has a long mustache";
+    set session             => "cookie";
+    set show_traces => 1;
+    set warnings => 1;
+    set show_errors => 1;
 
-            get "/forward" => sub {
-                session ignore_me => 1;
-                forward '/whatever';
-            };
+    set %{$config->{settings}} if %{$config->{settings}};
 
-            get "/*" => sub {
-                my $hits = session("hit_counter") || 0;
-                my $last = session("last_hit") || '';
+    get "/clear" => sub {
+        session "useless" =>  1; # force write/flush
+        session->destroy;
+        redirect '/postclear';
+    };
 
-                session hit_counter => $hits + 1;
-                session last_hit => (splat)[0];
+    get "/forward" => sub {
+        session ignore_me => 1;
+        forward '/whatever';
+    };
 
-                return "hits: $hits, last_hit: $last";
-            };
+    get "/*" => sub {
+        my $hits = session("hit_counter") || 0;
+        my $last = session("last_hit") || '';
 
-            dance;
-        }
-    );
+        session hit_counter => $hits + 1;
+        session last_hit => (splat)[0];
+
+        return "hits: $hits, last_hit: $last";
+    };
+
+    dance;
 }
 
 done_testing;
