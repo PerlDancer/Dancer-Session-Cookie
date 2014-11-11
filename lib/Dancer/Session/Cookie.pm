@@ -204,6 +204,11 @@ module uses cryptography to ensure integrity and also secrecy. The
 data your application stores in sessions is completely protected from
 both tampering and analysis on the client-side.
 
+Do be aware that browsers limit the size of individual cookies, so this method
+is not suitable if you wish to store a large amount of data.  Browsers typically
+limit the size of a cookie to 4KB, but that includes the space taken to store
+the cookie's name, expiration and other attributes as well as its content.
+
 =head1 CONFIGURATION
 
 The setting B<session> should be set to C<cookie> in order to use this session
