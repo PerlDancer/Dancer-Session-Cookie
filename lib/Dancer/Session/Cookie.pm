@@ -213,10 +213,15 @@ A mandatory setting is needed as well: B<session_cookie_key>, which should
 contain a random string of at least 16 characters (shorter keys are
 not cryptographically strong using AES in CBC mode).
 
+The optional B<session_expires> setting can also be passed, 
+which will provide the duration time of the cookie. If it's not present, the
+cookie won't have an expiration value.
+
 Here is an example configuration to use in your F<config.yml>:
 
     session: "cookie"
     session_cookie_key: "kjsdf07234hjf0sdkflj12*&(@*jk"
+    session_expires: 1 hour
 
 Compromising B<session_cookie_key> will disclose session data to
 clients and proxies or eavesdroppers and will also allow tampering,
