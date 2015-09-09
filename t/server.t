@@ -7,9 +7,16 @@ use Test::More 0.96 import => ["!pass"];
 use File::Temp;
 use HTTP::Date qw/str2time/;
 
-plan skip_all => "Test::WWW::Mechanize::PSGI required" unless eval {
-    require Test::WWW::Mechanize::PSGI;
+plan skip_all => "Plack::Test required" unless eval {
+    require Plack::Test;
 };
+
+plan skip_all => "HTTP::Cookies required" unless eval {
+    require HTTP::Cookies;
+};
+
+# available from Plack::Test
+require HTTP::Request::Common;
 
 my $tempdir = File::Temp->newdir;
 
@@ -61,42 +68,112 @@ my @configs = (
     },
 );
 
+my $url = 'http://localhost';
+MAIN:
 for my $config ( @configs ) {
-    my $app = create_app( $config );
+    my $app = Plack::Test->create( create_app( $config ) );
 
-            subtest $config->{label} => sub {
+    subtest $config->{label} => sub {
+        # Simulate two different browsers with two different jars
+        my @jars = map HTTP::Cookies->new, 1 .. 2;
 
-                # Simulate two different browsers with two different jars
-                my @mechs = map { Test::WWW::Mechanize::PSGI->new( app => $app) } 1..2;
-
-            for my $mech (@mechs) {
-                subtest 'one browser' => sub {
-                    $mech->get_ok( '/foo' );
-                    $mech->content_is( 'hits: 0, last_hit: ');
-                    my $cookie = extract_cookie($mech->res, $config->{settings}{session_name});
-                    ok $cookie, "session cookie set"
-                        or diag explain $mech->res->header('set-cookie');
-
-                    $mech->get_ok( '/bar' );
-                    $cookie = extract_cookie($mech->res, $config->{settings}{session_name});
-                    $mech->content_is( "hits: 1, last_hit: foo")
-                        or diag explain $mech->res->header('set-cookie');
-
-                    $mech->get_ok( '/forward' );
-                    $mech->content_is( "hits: 2, last_hit: bar", "session not overwritten" );
-
-                    $mech->get_ok( '/baz' );
-                    $mech->content_is("hits: 3, last_hit: whatever");
+        for my $jar (@jars) {
+            subtest 'one browser' => sub {
+                {
+                    my $req = HTTP::Request::Common::GET("$url/foo");
+                    my $res = $app->request($req);
+                    $jar->extract_cookies($res);
+                    ok( $res->is_success, 'GET /foo' );
+                    is(
+                        $res->content,
+                        'hits: 0, last_hit: ',
+                        'Got content',
+                    );
                 }
 
-            }
+                ok( $jar->as_string, 'session cookie set' );
 
-                $mechs[0]->get_ok( '/wibble' );
-                $mechs[0]->content_is("hits: 4, last_hit: baz", "session not overwritten");
+                {
+                    my $req = HTTP::Request::Common::GET("$url/bar");
+                    $jar->add_cookie_header($req);
+                    my $res = $app->request($req);
+                    ok( $res->is_success, 'GET /bar' );
+                    $jar->extract_cookies($res);
+                    is(
+                        $res->content,
+                        "hits: 1, last_hit: foo",
+                        'Got content',
+                    );
+                }
 
-                $mechs[0]->get_ok("/clear");
-                $mechs[0]->content_is( "hits: 0, last_hit: ", "session destroyed" );
+                {
+                    my $req = HTTP::Request::Common::GET("$url/forward");
+                    $jar->add_cookie_header($req);
+                    my $res = $app->request($req);
+                    $jar->extract_cookies($res);
+                    ok( $res->is_success, 'GET /forward' );
+                    is(
+                        $res->content,
+                        "hits: 2, last_hit: bar",
+                        "session not overwritten",
+                    );
+                }
+
+                {
+                    my $req = HTTP::Request::Common::GET("$url/baz");
+                    $jar->add_cookie_header($req);
+                    my $res = $app->request($req);
+                    $jar->extract_cookies($res);
+                    ok( $res->is_success, 'GET /baz' );
+                    is(
+                        $res->content,
+                        "hits: 3, last_hit: whatever",
+                        'Got content',
+                    );
+                }
             };
+        };
+
+        {
+            my $req = HTTP::Request::Common::GET("$url/wibble");
+            $jars[0]->add_cookie_header($req);
+            my $res = $app->request($req);
+            $jars[0]->extract_cookies($res);
+            ok( $res->is_success, 'GET /wibble' );
+            is(
+                $res->content,
+                "hits: 4, last_hit: baz",
+                "session not overwritten",
+            );
+        }
+
+        my $redir_url;
+        {
+            my $req = HTTP::Request::Common::GET("$url/clear");
+            $jars[0]->add_cookie_header($req);
+            my $res = $app->request($req);
+            $jars[0]->extract_cookies($res);
+            ok( $res->is_redirect, 'GET /clear' );
+            is(
+                $redir_url = $res->header('Location'),
+                'http://localhost/postclear',
+                'Redirects to /postclear',
+            );
+        }
+
+        {
+            my $req = HTTP::Request::Common::GET($redir_url);
+            $jars[0]->add_cookie_header($req);
+            my $res = $app->request($req);
+            $jars[0]->extract_cookies($res);
+            ok( $res->is_success, "GET $redir_url" );
+            is(
+                $res->content,
+                "hits: 0, last_hit: ",
+                "session destroyed",
+            );
+        }
+    };
 }
 
 
