@@ -7,69 +7,89 @@ use Test::More 0.96 import => ["!pass"];
 use File::Temp;
 use HTTP::Date qw/str2time/;
 
-plan skip_all => "Test::WWW::Mechanize::PSGI required" unless eval {
-    require Test::WWW::Mechanize::PSGI;
+plan skip_all => "Plack::Test required" unless eval {
+    require Plack::Test;
 };
+
+plan skip_all => "HTTP::Cookies required" unless eval {
+    require HTTP::Cookies;
+};
+
+# available from Plack::Test
+require HTTP::Request::Common;
 
 my $tempdir = File::Temp->newdir;
 
-my $app = build_app();
+my $app = Plack::Test->create( build_app() );
 
 # Two different browsers
-my @mechs = map { new_mech($app) } 1..2;
+my @jars = map HTTP::Cookies->new, 1 .. 2;
 
-    # Set foo to one and two respectively
-    $mechs[0]->get_ok( '/?foo=one' );
-    $mechs[1]->get_ok( '/?foo=two' );
+sub mk_request {
+    my ( $app, $jar, $url, $check_ok ) = @_;
+    defined $check_ok or $check_ok = 1;
+    my $req = HTTP::Request::Common::GET("http://localhost$url");
+    $jar->add_cookie_header($req);
+    my $res = $app->request($req);
+    $jar->extract_cookies($res);
+    $check_ok and ok( $res->is_success, "GET $url" );
+    return $res;
+}
 
-    # Retrieve both stored 
-    $mechs[0]->get_ok('/');
-    $mechs[0]->content_is('one');
+# Set foo to one and two respectively
+{
+    mk_request( $app, $jars[0], '/?foo=one' );
+    mk_request( $app, $jars[1], '/?foo=two' );
+}
 
-    $mechs[1]->get_ok('/');
-    $mechs[1]->content_is('two');
+# Retrieve both stored 
+{
+    my $res = mk_request( $app, $jars[0], '/' );
+    is( $res->content, 'one', 'Correct content' );
+}
 
-    $mechs[0]->get( '/die' );
-    is $mechs[0]->status => 500, "we died";
+{
+    my $res = mk_request( $app, $jars[1], '/' );
+    is( $res->content, 'two', 'Correct content' );
+}
 
-    $mechs[1]->get_ok('/');
-    $mechs[1]->content_is( 'two', 'Two received after first died' );
+{
+    my $res = mk_request( $app, $jars[0], '/die', 0 );
+    is( $res->code, 500, 'we died' );
+}
 
-sub new_mech { 
-    Test::WWW::Mechanize::PSGI->new( app => shift );
+{
+    my $res = mk_request( $app, $jars[1], '/' );
+    is( $res->content, 'two', 'Two received after first died' );
 }
 
 sub build_app {
-    return Test::WWW::Mechanize::PSGI->new( app => do {
+    package MyApp;
 
-        package MyApp;
+    use Dancer ':tests', ':syntax';
 
-        use Dancer ':tests', ':syntax';
+    set apphandler          => 'PSGI';
+    set appdir              => $tempdir;
+    set access_log          => 0;           # quiet startup banner
 
-        set apphandler          => 'PSGI';
-        set appdir              => $tempdir;
-        set access_log          => 0;           # quiet startup banner
+    set session_cookie_key => "John has a long mustache";
+    set session            => "cookie";
+    set show_traces        => 1;
+    set warnings           => 1;
+    set show_errors        => 1;
 
-        set session_cookie_key => "John has a long mustache";
-        set session            => "cookie";
-        set show_traces        => 1;
-        set warnings           => 1;
-        set show_errors        => 1;
+    get '/die' => sub {
+        die 'Bad route';
+    };
 
-        get '/die' => sub {
-            die 'Bad route';
-        };
+    get '/' => sub {
+        if (my $foo = param('foo')) {
+            session(foo => $foo);
+        }
+        return session('foo');
+    };
 
-        get '/' => sub {
-            if (my $foo = param('foo')) {
-                session(foo => $foo);
-            }
-            return session('foo');
-        };
-
-        return dance;
-    }
-);
+    dance;
 }
 
 done_testing;
