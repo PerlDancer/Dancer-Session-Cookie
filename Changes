@@ -1,6 +1,8 @@
 Revision history for Dancer-Session-Cookie
 
 {{$NEXT}}
+  - Switch Test::WWW::Mechanize::PSGI for raw HTTP::Request/Response. 
+
  [API CHANGES]
 
  [BUG FIXES]
