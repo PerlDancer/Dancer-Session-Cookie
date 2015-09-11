@@ -4,3 +4,4 @@ pod2htm*.tmp
 t/logs
 /Dancer-Session-Cookie*
 /.build
+logs
