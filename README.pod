@@ -1,15 +1,3 @@
-=pod
-
-=encoding utf-8
-
-=head1 NAME
-
-Dancer::Session::Cookie - Encrypted cookie-based session backend for Dancer
-
-=head1 VERSION
-
-version 0.22
-
 =head1 SYNOPSIS
 
 Your F<config.yml>:
@@ -30,6 +18,11 @@ module uses cryptography to ensure integrity and also secrecy. The
 data your application stores in sessions is completely protected from
 both tampering and analysis on the client-side.
 
+Do be aware that browsers limit the size of individual cookies, so this method
+is not suitable if you wish to store a large amount of data.  Browsers typically
+limit the size of a cookie to 4KB, but that includes the space taken to store
+the cookie's name, expiration and other attributes as well as its content.
+
 =head1 CONFIGURATION
 
 The setting B<session> should be set to C<cookie> in order to use this session
@@ -39,10 +32,15 @@ A mandatory setting is needed as well: B<session_cookie_key>, which should
 contain a random string of at least 16 characters (shorter keys are
 not cryptographically strong using AES in CBC mode).
 
+The optional B<session_expires> setting can also be passed, 
+which will provide the duration time of the cookie. If it's not present, the
+cookie won't have an expiration value.
+
 Here is an example configuration to use in your F<config.yml>:
 
     session: "cookie"
     session_cookie_key: "kjsdf07234hjf0sdkflj12*&(@*jk"
+    session_expires: 1 hour
 
 Compromising B<session_cookie_key> will disclose session data to
 clients and proxies or eavesdroppers and will also allow tampering,
@@ -70,66 +68,4 @@ See L<Dancer::Session> for details about session usage in route handlers.
 
 See L<Plack::Middleware::Session::Cookie>,
 L<Catalyst::Plugin::CookiedSession>, L<Mojolicious::Controller/session> for alternative implementation of this mechanism.
-
-=for :stopwords cpan testmatrix url annocpan anno bugtracker rt cpants kwalitee diff irc mailto metadata placeholders metacpan
-
-=head1 SUPPORT
-
-=head2 Bugs / Feature Requests
-
-Please report any bugs or feature requests through the issue tracker
-at L<https://github.com/dagolden/dancer-session-cookie/issues>.
-You will be notified automatically of any progress on your issue.
-
-=head2 Source Code
-
-This is open source software.  The code repository is available for
-public review and contribution under the terms of the license.
-
-L<https://github.com/dagolden/dancer-session-cookie>
-
-  git clone git://github.com/dagolden/dancer-session-cookie.git
-
-=head1 AUTHORS
-
-=over 4
-
-=item *
-
-Alex Kapranoff <kappa@cpan.org>
-
-=item *
-
-Alex Sukria <sukria@cpan.org>
-
-=item *
-
-David Golden <dagolden@cpan.org>
-
-=back
-
-=head1 CONTRIBUTORS
-
-=over 4
-
-=item *
-
-Michael G. Schwern <schwern@pobox.com>
-
-=item *
-
-Neil Kirsopp <neil@broadbean.com>
-
-=item *
-
-Nick S. Knutov <nick@knutov.com>
-
-=back
-
-=head1 COPYRIGHT AND LICENSE
-
-This software is copyright (c) 2013 by Alex Kapranoff.
-
-This is free software; you can redistribute it and/or modify it under
-the same terms as the Perl 5 programming language system itself.
 
