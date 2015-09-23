@@ -8,7 +8,6 @@ META.json
 META.yml
 Makefile.PL
 README.mkdn
-README.pod
 SIGNATURE
 cpanfile
 dist.ini
