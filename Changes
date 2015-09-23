@@ -1,6 +1,8 @@
 Revision history for Dancer-Session-Cookie
 
 {{$NEXT}}
+    - Remode  'README.pod' from distribution. [GH#6]
+
   [ API CHANGES ]
 
   [ BUG FIXES ]
