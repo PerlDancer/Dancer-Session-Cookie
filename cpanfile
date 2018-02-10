@@ -29,6 +29,7 @@ on 'test' => sub {
   requires "Test::Exception" => "0";
   requires "Test::More" => "0.96";
   requires "Test::NoWarnings" => "0";
+  requires "Test::Requires" => "0";
   requires "perl" => "5.006";
 };
 

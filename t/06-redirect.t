@@ -5,16 +5,12 @@ use warnings;
 
 use Test::More import => ["!pass"];
 
-my $min_ver = 1.0029;
-eval "use Plack::Test $min_ver";
-plan skip_all => "Plack::Test $min_ver required" if $@;
-
-plan skip_all => "HTTP::Cookies required" unless eval {
-    require HTTP::Cookies;
+use Test::Requires {
+    'Plack::Test'   => '1.0029',
+    'HTTP::Cookies' => 0,
+    # available from Plack::Test
+    'HTTP::Request::Common' => 0,
 };
-
-# available from Plack::Test
-require HTTP::Request::Common;
 
 {
     package MyApp;
