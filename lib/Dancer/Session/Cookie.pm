@@ -194,12 +194,12 @@ Your F<config.yml>:
 =head1 DESCRIPTION
 
 This module implements a session engine for sessions stored entirely
-in cookies. Usually only B<session id> is stored in cookies and
+in cookies. Usually only the B<session id> is stored in cookies and
 the session data itself is saved in some external storage, e.g.
-database. This module allows to avoid using external storage at
+a database. This module allows you to avoid using external storage at
 all.
 
-Since server cannot trust any data returned by client in cookies, this
+Since a server cannot trust any data returned by clients in cookies, this
 module uses cryptography to ensure integrity and also secrecy. The
 data your application stores in sessions is completely protected from
 both tampering and analysis on the client-side.
@@ -214,11 +214,11 @@ the cookie's name, expiration and other attributes as well as its content.
 The setting B<session> should be set to C<cookie> in order to use this session
 engine in a Dancer application. See L<Dancer::Config>.
 
-A mandatory setting is needed as well: B<session_cookie_key>, which should
+Another setting is also required: B<session_cookie_key>, which should
 contain a random string of at least 16 characters (shorter keys are
 not cryptographically strong using AES in CBC mode).
 
-The optional B<session_expires> setting can also be passed, 
+The optional B<session_expires> setting can also be passed,
 which will provide the duration time of the cookie. If it's not present, the
 cookie won't have an expiration value.
 
