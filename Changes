@@ -6,6 +6,7 @@ Revision history for Dancer-Session-Cookie
   [ BUG FIXES ]
 
   [ DOCUMENTATION ]
+  - Improve English flow of the POD. [GH#9, Paul Cochrane]
 
   [ ENHANCEMENTS ]
 
