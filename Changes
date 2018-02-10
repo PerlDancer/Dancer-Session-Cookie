@@ -4,6 +4,7 @@ Revision history for Dancer-Session-Cookie
   [ API CHANGES ]
 
   [ BUG FIXES ]
+  - Tests require Plack::Test v1.0029+. [GH#8, Mohammad S Anwar]
 
   [ DOCUMENTATION ]
   - Improve English flow of the POD. [GH#9, Paul Cochrane]

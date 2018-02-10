@@ -25,10 +25,11 @@ on 'test' => sub {
   requires "HTTP::Request::Common" => "0";
   requires "IO::Handle" => "0";
   requires "IPC::Open3" => "0";
-  requires "Plack::Test" => "0";
+  requires "Plack::Test" => "1.0029";
   requires "Test::Exception" => "0";
   requires "Test::More" => "0.96";
   requires "Test::NoWarnings" => "0";
+  requires "Test::Requires" => "0";
   requires "perl" => "5.006";
 };
 
