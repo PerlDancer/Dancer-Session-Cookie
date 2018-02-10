@@ -6,11 +6,12 @@ use warnings;
 use Test::More import => ["!pass"];
 
 use Test::Requires {
-    'Plack::Test'   => '1.0029',
-    'HTTP::Cookies' => 0,
-    # available from Plack::Test
-    'HTTP::Request::Common' => 0,
+    'Plack'   => '1.0029',
 };
+
+use Plack::Test;
+use HTTP::Cookies;
+use HTTP::Request::Common;
 
 {
     package MyApp;
