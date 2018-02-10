@@ -5,9 +5,9 @@ use warnings;
 
 use Test::More import => ["!pass"];
 
-plan skip_all => "Plack::Test required" unless eval {
-    require Plack::Test;
-};
+my $min_ver = 1.0029;
+eval "use Plack::Test $min_ver";
+plan skip_all => "Plack::Test $min_ver required" if $@;
 
 plan skip_all => "HTTP::Cookies required" unless eval {
     require HTTP::Cookies;
