@@ -7,9 +7,9 @@ use Test::More 0.96 import => ["!pass"];
 use File::Temp;
 use HTTP::Date qw/str2time/;
 
-use Test::Requires {
-    map { $_ => 0 } qw/ Plack::Test HTTP::Cookies HTTP::Request::Common /
-};
+use Plack::Test;
+use HTTP::Cookies;
+use HTTP::Request::Common;
 
 my $tempdir = File::Temp->newdir;
 
