@@ -4,6 +4,7 @@ use warnings;
 # ABSTRACT: Encrypted cookie-based session backend for Dancer
 # VERSION
 
+use 5.008;
 use base 'Dancer::Session::Abstract';
 
 use Session::Storage::Secure 0.010;
