@@ -1,3 +1,6 @@
+use strict;
+use warnings;
+
 use Test::More import => ['!pass'];
 use Test::Exception;
 use Test::NoWarnings;
