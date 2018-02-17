@@ -1,10 +1,11 @@
 #!/usr/bin/env perl
 
+use strict;
+use warnings;
+
 use Test::More import => ['!pass'];
 use Test::Exception;
 
-use strict;
-use warnings;
 use Dancer;
 use Dancer::ModuleLoader;
 use Dancer::Session::Cookie;
