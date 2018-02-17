@@ -7,9 +7,9 @@ use warnings;
 use Dancer;
 use Dancer::ModuleLoader;
 
-BEGIN { 
+BEGIN {
     plan tests => 11;
-    use_ok 'Dancer::Session::Cookie' 
+    use_ok 'Dancer::Session::Cookie'
 }
 
 my $session;

@@ -14,6 +14,7 @@ Revision history for Dancer-Session-Cookie
   [ MISC ]
   - Added appveyor integration for Windows CI. [GH#11, Paul Cochrane]
   - Set minimal Perl version to be 5.8. [GH#10, Paul Cochrane]
+  - Remove trailing whitespaces. [GH#14, Paul Cochrane]
 
   [ STATISTICS ]
 
@@ -101,10 +102,10 @@ Revision history for Dancer-Session-Cookie
 
 0.14 2011-03-12
   [ Michael G. Schwern ]
-    - Fix for Dancer > v1.3012 
-    - Add support for session_secure to serve https only cookies. 
-    - Add missing MYMETA.yml 
-    - Make Dancer::Session::Cookie honor the session_name setting      
+    - Fix for Dancer > v1.3012
+    - Add support for session_secure to serve https only cookies.
+    - Add missing MYMETA.yml
+    - Make Dancer::Session::Cookie honor the session_name setting
       added to Dancer::Session::Abstract
     - Add session_cookie_path to control the path of the cookie.
 
