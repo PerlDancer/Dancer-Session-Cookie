@@ -1,3 +1,5 @@
+#!/usr/bin/env perl
+
 use Test::More import => ['!pass'];
 use Test::Exception;
 
