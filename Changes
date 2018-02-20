@@ -15,6 +15,7 @@ Revision history for Dancer-Session-Cookie
   - Added appveyor integration for Windows CI. [GH#11, Paul Cochrane]
   - Set minimal Perl version to be 5.8. [GH#10, Paul Cochrane]
   - Misc code cleanup. [GH#14, GH#15, GH#16, GH#17, Paul Cochrane]
+  - Added appveyor and travis badges to README. [GH#13, Paul Cochrane]
 
   [ STATISTICS ]
 
