@@ -9,6 +9,7 @@ Revision history for Dancer-Session-Cookie
 
   [ ENHANCEMENTS ]
   - add a CONTRIBUTING file [GH#18, Paul Cochrane]
+  - minor refactoring, bump minor Perl version to 5.10.0.
 
   [ NEW FEATURES ]
 
