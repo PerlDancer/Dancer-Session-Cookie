@@ -4,8 +4,8 @@ package Dancer::Session::Cookie;
 use strict;
 use warnings;
 
-use 5.008;
-use base 'Dancer::Session::Abstract';
+use 5.10.0;
+use parent 'Dancer::Session::Abstract';
 
 use Session::Storage::Secure 0.010;
 use Crypt::CBC;
@@ -55,9 +55,9 @@ sub init {
 # return our cached ID if we have it instead of looking in a cookie
 sub read_session_id {
     my ($self) = @_;
-    return $SESSION->id
-      if defined $SESSION;
-    return $self->SUPER::read_session_id;
+    return defined $SESSION 
+                ? $SESSION->id
+                : $self->SUPER::read_session_id;
 }
 
 sub retrieve {
@@ -114,14 +114,14 @@ sub destroy {
 hook 'after' => sub {
     my $response = shift;
 
-    if ($SESSION) {
-        # UGH! Awful hack because Dancer instantiates responses
-        # and headers too many times and locks out new cookies
-        $response->{_built_cookies} = 0;
+    return unless $SESSION;
 
-        my $c = Dancer::Cookie->new( $SESSION->_cookie_params );
-        Dancer::Cookies->set_cookie_object( $c->name => $c );
-    }
+    # UGH! Awful hack because Dancer instantiates responses
+    # and headers too many times and locks out new cookies
+    $response->{_built_cookies} = 0;
+
+    my $c = Dancer::Cookie->new( $SESSION->_cookie_params );
+    Dancer::Cookies->set_cookie_object( $c->name => $c );
 };
 
 # Make sure that the session is initially undefined for every request
@@ -142,9 +142,7 @@ sub _cookie_params {
         path      => setting('session_cookie_path') || '/',
         domain    => setting('session_domain'),
         secure    => setting('session_secure'),
-        http_only => defined( setting("session_is_http_only") )
-        ? setting("session_is_http_only")
-        : 1,
+        http_only => setting("session_is_http_only") // 1.
     );
     if ( defined $duration ) {
         $cookie{expires} = time + $duration;
