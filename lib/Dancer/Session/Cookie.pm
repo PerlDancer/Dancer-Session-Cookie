@@ -1,8 +1,8 @@
 package Dancer::Session::Cookie;
+# ABSTRACT: Encrypted cookie-based session backend for Dancer
+
 use strict;
 use warnings;
-# ABSTRACT: Encrypted cookie-based session backend for Dancer
-# VERSION
 
 use 5.008;
 use base 'Dancer::Session::Abstract';
